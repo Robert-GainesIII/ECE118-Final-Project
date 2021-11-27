@@ -69,7 +69,7 @@ static int FLBUFFER = 0;
 static int FRBUFFER = 0;
 static int RLBUFFER = 0;
 static int RRBUFFER = 0;
-static uint8_t READIR = 1;
+uint8_t READIR = 1;
 /* Any private module level variable that you might need for keeping track of
    events would be placed here. Private variables should be STATIC so that they
    are limited in scope to this module. */
@@ -269,7 +269,7 @@ uint8_t BeaconDetectionEventChecker(void) {
     uint8_t returnVal = FALSE;
     uint16_t curr_lvl = AD_ReadADPin(BEACON_DETECTOR_PIN); // read the light level
     static int i = 0;
-    //if (i++ % 1000 == 0){printf("Beacon Detector Value: %u \r\n", AD_ReadADPin(BEACON_DETECTOR_PIN));}
+    if (i++ % 1000 == 0){printf("Beacon Detector Value: %u \r\n", AD_ReadADPin(BEACON_DETECTOR_PIN));}
 
     // changes the threshold if a transition over the current threshold occurs
     // sets the relevant return event
@@ -302,6 +302,7 @@ uint8_t BeaconDetectionEventChecker(void) {
     return (returnVal);
     }
     else{
+        printf("IR CHECKER IS TURNED OFF!!!!");
         return 0;
     }
 }

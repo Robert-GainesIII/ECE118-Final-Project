@@ -209,16 +209,16 @@ ES_Event RunTapeFollowHSM(ES_Event ThisEvent)
         //CASE FOR TURNING AROUND CORNERS FOR CW TRAVERSE OR AN ADUSTMENT FOR 
         //CCW REVERSE TRAVERSING
     case RotateCW:
-
+        printf("ROTATE CW");
+        readIR(FALSE);
         switch (ThisEvent.EventType) {
         case ES_ENTRY:
-
             //HERE BASED ON THE CW FLAG A TIMER WILL BE INITILIZED FOR FORWARD
             //OR REVERSE TRAVERSING
-            ES_Timer_InitTimer(CCW_ADJUST_TIMER2, 800);
+            ES_Timer_InitTimer(CCW_ADJUST_TIMER, 800);
 
-            LeftMtrSpeed(60, FORWARD);
-            RightMtrSpeed(60, REVERSE);
+            LeftMtrSpeed(70, FORWARD);
+            RightMtrSpeed(70, REVERSE);
 
             ThisEvent.EventType = ES_NO_EVENT;
             break;
@@ -231,33 +231,33 @@ ES_Event RunTapeFollowHSM(ES_Event ThisEvent)
             //                    ThisEvent.EventType = ES_NO_EVENT;
             //                  
             //                    break;
-        case TAPE_LEFT:
-            //CW AJUSTMENT WORKED AND BOT IS HEAD FIRST INTO WALL
-            //REVERSE, ADJUST, AND CONTINUE SHARP TURNS
-            StopMotors();
-            nextState = Reverse;
-            makeTransition = TRUE;
-            ThisEvent.EventType = ES_NO_EVENT;
-            break;
-        case TAPE_FRONT:
-            //CW AJUSTMENT WORKED AND BOT IS HEAD FIRST INTO WALL
-            //REVERSE, ADJUST, AND CONTINUE SHARP TURNS
-            StopMotors();
-            nextState = Reverse;
-            makeTransition = TRUE;
-            ThisEvent.EventType = ES_NO_EVENT;
-            break;
-        case TAPE_RIGHT:
-            //START MANUAEVER AROUND TOWER THIS HAPPENS LESS OFTEN THAN THE 
-            //FRONT BUMP
-            StopMotors();
-            nextState = Reverse;
-            makeTransition = TRUE;
-            ThisEvent.EventType = ES_NO_EVENT;
-            break;
+//        case TAPE_LEFT:
+//            //CW AJUSTMENT WORKED AND BOT IS HEAD FIRST INTO WALL
+//            //REVERSE, ADJUST, AND CONTINUE SHARP TURNS
+//            StopMotors();
+//            nextState = Reverse;
+//            makeTransition = TRUE;
+//            ThisEvent.EventType = ES_NO_EVENT;
+//            break;
+//        case TAPE_FRONT:
+//            //CW AJUSTMENT WORKED AND BOT IS HEAD FIRST INTO WALL
+//            //REVERSE, ADJUST, AND CONTINUE SHARP TURNS
+//            StopMotors();
+//            nextState = Reverse;
+//            makeTransition = TRUE;
+//            ThisEvent.EventType = ES_NO_EVENT;
+//            break;
+//        case TAPE_RIGHT:
+//            //START MANUAEVER AROUND TOWER THIS HAPPENS LESS OFTEN THAN THE 
+//            //FRONT BUMP
+//            StopMotors();
+//            nextState = Reverse;
+//            makeTransition = TRUE;
+//            ThisEvent.EventType = ES_NO_EVENT;
+//            break;
         case ES_TIMEOUT:
             //TIMED AJUSTMENT FOR CW TRAVERSING AROUND CORNERS, VERY CLEAN
-            if (ThisEvent.EventParam == CCW_ADJUST_TIMER2) {
+            if (ThisEvent.EventParam == CCW_ADJUST_TIMER) {
                 StopMotors();
                 nextState = SharpTurn;
                 makeTransition = TRUE;
@@ -270,11 +270,12 @@ ES_Event RunTapeFollowHSM(ES_Event ThisEvent)
         //COLLSIONS OR TAPE WILL RESULT IN SMALL REVERSE THE AJUSTMENT OR SWITCHED
         //TRAVERSING DIRECTIONS
     case Reverse:
+        printf("Reverse");
         readIR(FALSE);
         switch (ThisEvent.EventType) {
         case ES_ENTRY:
             //Reverse
-            ES_Timer_InitTimer(REVERSE_TIMER1, 1000);
+            ES_Timer_InitTimer(REVERSE_TIMER1, 700);
 
             LeftMtrSpeed(70, REVERSE);
             RightMtrSpeed(70, REVERSE);
@@ -286,6 +287,7 @@ ES_Event RunTapeFollowHSM(ES_Event ThisEvent)
         case ES_TIMEOUT:
             if (ThisEvent.EventParam == REVERSE_TIMER1) {
                 StopMotors();
+                
                 nextState = RotateCW;
                 makeTransition = TRUE;
                 ThisEvent.EventType = ES_NO_EVENT;
@@ -300,13 +302,13 @@ ES_Event RunTapeFollowHSM(ES_Event ThisEvent)
             //                    ThisEvent.EventType = ES_NO_EVENT;
             //                    break;
         case ES_EXIT:
-            readIR(TRUE);
             break;
         }
         break;
 
     case SharpTurn:
-
+        printf("sharpturn");
+        readIR(TRUE);
         switch (ThisEvent.EventType) {
         case ES_ENTRY:
 

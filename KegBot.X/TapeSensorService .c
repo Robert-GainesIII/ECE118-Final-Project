@@ -88,7 +88,7 @@ ES_Event RunTapeSensorService(ES_Event ThisEvent) {
             // go in the init function above.
             //
             //printf("INIT TIMER");
-            ES_Timer_InitTimer(TAPE_SENSOR_TIMER, 200);
+            ES_Timer_InitTimer(TAPE_SENSOR_TIMER, 100);
             // This section is used to reset service for some reason
             break;
         case ES_TIMERACTIVE:

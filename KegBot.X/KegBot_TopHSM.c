@@ -243,6 +243,7 @@ ES_Event RunTopHSM(ES_Event ThisEvent)
             if (CORRECT_TOWER_BUMP_COUNT >= 36) {
                 StopMotors();
                 nextState = NextTower;
+                CORRECT_TOWER_BUMP_COUNT = 0;
                 makeTransition = TRUE;
                 ThisEvent.EventType = ES_NO_EVENT;
             }
@@ -356,7 +357,7 @@ ES_Event RunTopHSM(ES_Event ThisEvent)
 
 
 
-        };
+        }
         break;
     case Shooting:
         //ThisEvent = RunAtFaceSubHSM(ThisEvent);
@@ -386,7 +387,7 @@ ES_Event RunTopHSM(ES_Event ThisEvent)
 
             }
             break;
-        };
+        }
         break;
 
     case Jiggle:
@@ -424,7 +425,7 @@ ES_Event RunTopHSM(ES_Event ThisEvent)
             //                        
             //                    }
             //                    break;
-        };
+        }
 
         break;
 
@@ -437,7 +438,7 @@ ES_Event RunTopHSM(ES_Event ThisEvent)
             nextState = Searching;
             makeTransition = TRUE;
             ThisEvent.EventType = ES_NO_EVENT;
-        };
+        }
         break;
 
 
@@ -485,16 +486,16 @@ ES_Event RunTopHSM(ES_Event ThisEvent)
         case OFF_TOWER_R:
 
             StopMotors();
-            LeftMtrSpeed(72, REVERSE);
-            RightMtrSpeed(64, REVERSE);
+            LeftMtrSpeed(68, REVERSE);
+            RightMtrSpeed(60, REVERSE);
             ThisEvent.EventType = ES_NO_EVENT;
 
             break;
         case OFF_TOWER_L:
 
             StopMotors();
-            LeftMtrSpeed(72, FORWARD);
-            RightMtrSpeed(64, FORWARD);
+            LeftMtrSpeed(68, FORWARD);
+            RightMtrSpeed(60, FORWARD);
             ThisEvent.EventType = ES_NO_EVENT;
 
             break;

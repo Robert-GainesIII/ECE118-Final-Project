@@ -45,15 +45,23 @@
 typedef enum {
     InitPSubState,
     Forward,
+    ForwardAlmostOff,
+            ForwardReallyAlmostOff,
     Reverse,
-            
+    ReverseAlmostOff,
+            ReverseReallyAlmostOff,
+
 
 } AtTowerState_t;
 
 static const char *StateNames[] = {
 	"InitPSubState",
 	"Forward",
+	"ForwardAlmostOff",
+	"ForwardReallyAlmostOff",
 	"Reverse",
+	"ReverseAlmostOff",
+	"ReverseReallyAlmostOff",
 };
 
 
@@ -88,7 +96,8 @@ static uint8_t MyPriority;
  *        to rename this to something appropriate.
  *        Returns TRUE if successful, FALSE otherwise
  * @author J. Edward Carryer, 2011.10.23 19:25 */
-uint8_t InitTraversingHSM(void) {
+uint8_t InitTraversingHSM(void)
+{
     ES_Event returnEvent;
 
     CurrentState = InitPSubState;
@@ -114,123 +123,147 @@ uint8_t InitTraversingHSM(void) {
  *       not consumed as these need to pass pack to the higher level state machine.
  * @author J. Edward Carryer, 2011.10.23 19:25
  * @author Gabriel H Elkaim, 2011.10.23 19:25 */
-ES_Event RunTraversingHSM(ES_Event ThisEvent) {
+ES_Event RunTraversingHSM(ES_Event ThisEvent)
+{
     uint8_t makeTransition = FALSE; // use to flag transition
     AtTowerState_t nextState; // <- change type to correct enum
-    
+
     //USED TO TRACK NUMBER OF TAPE EVENTS
-    static uint8_t TAPE_F_OR_B;
-    //static uint8_t TAPE_L_OR_R;
+
+    static uint8_t TAPE_F = 0;
+    static uint8_t TAPE_B = 0;
+    static uint8_t TAPE_L = 0;
+    static uint8_t TAPE_R = 0;
     ES_Tattle(); // trace call stack
 
     switch (CurrentState) {
-        case InitPSubState: // If current state is initial Psedudo State
-            if (ThisEvent.EventType == ES_INIT)// only respond to ES_Init
-            {
-                // this is where you would put any actions associated with the
-                // transition from the initial pseudo-state into the actual
-                // initial state
-                InitAtTowerSubHSM();
-                InitRotateAroundTowerSubHSM();
-                // now put the machine into the actual initial state
+    case InitPSubState: // If current state is initial Psedudo State
+        if (ThisEvent.EventType == ES_INIT)// only respond to ES_Init
+        {
+            // this is where you would put any actions associated with the
+            // transition from the initial pseudo-state into the actual
+            // initial state
+            InitAtTowerSubHSM();
+            InitRotateAroundTowerSubHSM();
+            // now put the machine into the actual initial state
+            nextState = Forward;
+            makeTransition = TRUE;
+            ThisEvent.EventType = ES_NO_EVENT;
+        }
+        break;
+
+
+        //STATE AFTER REVERSING TO ADJUST FOR A CLOCKWISE TRAVERSE
+        //ALSO USED AS THE STATE FOR AJUSTING IF SHARP TURN TAKES TOO LONG
+        //TO RESULT IN A COLLISION
+    case Forward:
+        printf("FORWARD STATE");
+        ThisEvent = RunAtTowerSubHSM(ThisEvent);
+        switch (ThisEvent.EventType) {
+        
+        case TAPE_FRONT:
+
+            //START MANUAEVER AROUND TOWER BEFORE TIMEOUT
+            TAPE_F = 1;
+            if(TAPE_R == 1 || TAPE_L == 1){
+               nextState = Reverse;
+               makeTransition = TRUE; 
+               TAPE_F = 0;
+                TAPE_B = 0;
+                TAPE_L = 0;
+                TAPE_R = 0;
+            }
+            
+            ThisEvent.EventType = ES_NO_EVENT;
+            break;
+            
+        case TAPE_LEFT:
+            TAPE_L = 1;
+            //START MANUAEVER AROUND TOWER BEFORE TIMEOUT
+            if(TAPE_B == 1){
+                nextState = Reverse;
+                makeTransition = TRUE;
+                TAPE_F = 0;
+                TAPE_B = 0;
+                TAPE_L = 0;
+                TAPE_R = 0;
+            }
+            
+            ThisEvent.EventType = ES_NO_EVENT;
+            break;
+        case TAPE_RIGHT:
+            TAPE_R = 1;
+            //START MANUAEVER AROUND TOWER BEFORE TIMEOUT
+            if(TAPE_F == 1){
+                nextState = Reverse;
+                makeTransition = TRUE;
+                TAPE_F = 0;
+                TAPE_B = 0;
+                TAPE_L = 0;
+                TAPE_R = 0;
+            }
+            
+            ThisEvent.EventType = ES_NO_EVENT;
+            break;
+        }
+        break;
+    
+   
+    case Reverse:
+        printf("REVERSE STATE");
+        ThisEvent = RunRotateAroundTowerHSM(ThisEvent);
+
+        switch (ThisEvent.EventType) {
+
+        case TAPE_REAR:
+
+            //START MANUAEVER AROUND TOWER BEFORE TIMEOUT
+            TAPE_B = 1;
+            if(TAPE_R == 1 || TAPE_L == 1){
+               nextState = Forward;
+               makeTransition = TRUE; 
+               TAPE_F = 0;
+                TAPE_B = 0;
+                TAPE_L = 0;
+                TAPE_R = 0;
+            }
+            
+            ThisEvent.EventType = ES_NO_EVENT;
+            break;
+            
+        case TAPE_LEFT:
+            TAPE_L = 1;
+            //START MANUAEVER AROUND TOWER BEFORE TIMEOUT
+            if(TAPE_B == 1){
                 nextState = Forward;
                 makeTransition = TRUE;
-                ThisEvent.EventType = ES_NO_EVENT;
+                TAPE_F = 0;
+                TAPE_B = 0;
+                TAPE_L = 0;
+                TAPE_R = 0;
             }
-            break;
-        
             
-         //STATE AFTER REVERSING TO ADJUST FOR A CLOCKWISE TRAVERSE
-         //ALSO USED AS THE STATE FOR AJUSTING IF SHARP TURN TAKES TOO LONG
-         //TO RESULT IN A COLLISION
-        case Forward:
-            ThisEvent = RunAtTowerSubHSM(ThisEvent);
-            switch (ThisEvent.EventType) {
-                case TAPE_LEFT:
-                    
-                    //FRONT LEFT BUMP ON A COUNTER CLOCK WISE ROTATION MOST LIKELY
-                    //MEANS THE BOT WAS TOO CLOSE TO THE TOWER AND SHOULD REVERSE
-                    StopMotors();
-                    
-                    //IF TWO OR MORE TAPE SENSORS GO OFF STOP AND CHANGE DIRECTION OF TRAVERSE
-                    if(TAPE_F_OR_B){
-                    nextState = Reverse;
-                    makeTransition = TRUE;
-                    TAPE_F_OR_B = 0;
-                    }
-                 
-                    ThisEvent.EventType = ES_NO_EVENT;
-                  
-                    break;
-                case TAPE_RIGHT:
-                    
-                    //FRONT RIGHT BUMP ON A COUNTER CLOCK WISE ROTATION MOST LIKELY
-                    //MEANS THE BOT WAS TOO CLOSE TO THE TOWER AND SHOULD REVERSE
-                    StopMotors();
-                    if(TAPE_F_OR_B){
-                    nextState = Reverse;
-                    makeTransition = TRUE;
-                    TAPE_F_OR_B = 0;
-                    }
-                    ThisEvent.EventType = ES_NO_EVENT;
-                    break;
-                case TAPE_FRONT:
-                    
-                   //START MANUAEVER AROUND TOWER BEFORE TIMEOUT
-                    StopMotors();
-                    TAPE_F_OR_B = 1;
-                    ThisEvent.EventType = ES_NO_EVENT;
-                    break;
-                    
-                
-               
+            ThisEvent.EventType = ES_NO_EVENT;
+            break;
+        case TAPE_RIGHT:
+            TAPE_R = 1;
+            //START MANUAEVER AROUND TOWER BEFORE TIMEOUT
+            if(TAPE_B == 1){
+                nextState = Forward;
+                makeTransition = TRUE;
+                TAPE_F = 0;
+                TAPE_B = 0;
+                TAPE_L = 0;
+                TAPE_R = 0;
             }
-            break;
             
-        //CASE FOR TURNING AROUND CORNERS FOR CW TRAVERSE OR AN ADUSTMENT FOR 
-        //CCW REVERSE TRAVERSING
-        case Reverse:
-            ThisEvent = RunRotateAroundTowerHSM(ThisEvent);
-            
-            switch (ThisEvent.EventType) {
-               
-                case TAPE_LEFT:
-                    
-                    //FRONT LEFT BUMP ON A COUNTER CLOCK WISE ROTATION MOST LIKELY
-                    //MEANS THE BOT WAS TOO CLOSE TO THE TOWER AND SHOULD REVERSE
-                    StopMotors();
-                    if(TAPE_F_OR_B){
-                    nextState = Forward;
-                    makeTransition = TRUE;
-                    TAPE_F_OR_B = 0;
-                    }
-                    ThisEvent.EventType = ES_NO_EVENT;
-                  
-                    break;
-                case TAPE_RIGHT:
-                    
-                    //FRONT RIGHT BUMP ON A COUNTER CLOCK WISE ROTATION MOST LIKELY
-                    //MEANS THE BOT WAS TOO CLOSE TO THE TOWER AND SHOULD REVERSE
-                    StopMotors();
-                    if(TAPE_F_OR_B){
-                    nextState = Forward;
-                    makeTransition = TRUE;
-                    TAPE_F_OR_B = 0;
-                    }
-                    ThisEvent.EventType = ES_NO_EVENT;
-                    break;
-                case TAPE_REAR:
-                    
-                   //START MANUAEVER AROUND TOWER BEFORE TIMEOUT
-                    StopMotors();
-                    TAPE_F_OR_B = 1;
-                    
-                    ThisEvent.EventType = ES_NO_EVENT;
-                    break;
-            }
+            ThisEvent.EventType = ES_NO_EVENT;
             break;
-        default:
-            break;
+      
+        }
+        break;
+    default:
+        break;
     } // end switch on Current State
 
     if (makeTransition == TRUE) { // making a state transition, send EXIT and ENTRY

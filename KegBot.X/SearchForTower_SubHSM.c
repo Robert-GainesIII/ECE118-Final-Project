@@ -207,6 +207,7 @@ ES_Event RunSearchingSubHSM(ES_Event ThisEvent)
 
         case TAPE_FRONT:
             StopMotors();
+            readIR(FALSE);
             nextState = TapeFollow;
             makeTransition = TRUE;
 
@@ -214,6 +215,7 @@ ES_Event RunSearchingSubHSM(ES_Event ThisEvent)
             break;
         case TAPE_REAR:
             StopMotors();
+            readIR(FALSE);
             nextState = TapeFollow;
             makeTransition = TRUE;
 
@@ -221,6 +223,7 @@ ES_Event RunSearchingSubHSM(ES_Event ThisEvent)
             break;
         case TAPE_LEFT:
             StopMotors();
+            readIR(FALSE);
             nextState = TapeFollow;
             makeTransition = TRUE;
 
@@ -228,6 +231,7 @@ ES_Event RunSearchingSubHSM(ES_Event ThisEvent)
             break;
         case TAPE_RIGHT:
             StopMotors();
+            readIR(FALSE);
             nextState = TapeFollow;
             makeTransition = TRUE;
 
@@ -345,8 +349,9 @@ ES_Event RunSearchingSubHSM(ES_Event ThisEvent)
         break;
 
     case TapeFollow:
-
+        readIR(FALSE);
         ThisEvent = RunTapeFollowHSM(ThisEvent);
+        readIR(TRUE);
         switch (ThisEvent.EventType) {
             
         case IR_FOUND:

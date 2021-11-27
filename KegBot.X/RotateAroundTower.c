@@ -232,7 +232,7 @@ ES_Event RunRotateAroundTowerHSM(ES_Event ThisEvent) {
             switch (ThisEvent.EventType) {
                 case ES_ENTRY:
                     //Reverse
-                    ES_Timer_InitTimer(REVERSE_TIMER1, 500);
+                    ES_Timer_InitTimer(REVERSE_TIMER1, 400);
 
                     LeftMtrSpeed(MOTORSPEED, FORWARD);
                     RightMtrSpeed(MOTORSPEED, FORWARD);
@@ -270,7 +270,7 @@ ES_Event RunRotateAroundTowerHSM(ES_Event ThisEvent) {
                     ES_Timer_InitTimer(TURN_TIMER, 700);
 
 
-                    LeftMtrSpeed(90, REVERSE);
+                    LeftMtrSpeed(85, REVERSE);
                     RightMtrSpeed(70, REVERSE);
 
                     ThisEvent.EventType = ES_NO_EVENT;

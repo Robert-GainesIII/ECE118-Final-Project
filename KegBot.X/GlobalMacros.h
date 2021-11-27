@@ -30,7 +30,7 @@
 
 #define TRACKWIRE_PIN AD_PORTW7
 #define TRACKWIRE_UPPER_LIM 890
-#define TRACKWIRE_LOWER_LIM 850
+#define TRACKWIRE_LOWER_LIM 820
 
 // can be used to limit the max speed for the motors if there are problems
 #define MAX_MOTOR_PWM 900
@@ -132,5 +132,16 @@
 
 #define SOLENOID_OFF 0
 #define SOLENOID_ON 1
+
+
+#define FACE_CENTER_ON 1
+#define FACE_LEFT_ON 2
+#define FACE_RIGHT_ON 4
+#define BOTTOM_FRONT 8
+#define BOTTOM_REAR 16
+#define BOTTOM_LEFT 32
+#define BOTTOM_RIGHT 64
+#define FACE_LEFT_OFF 128
+#define FACE_RIGHT_OFF 256
 
 #endif
