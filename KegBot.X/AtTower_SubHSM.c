@@ -8,7 +8,7 @@
  * this file will need to be modified to fit your exact needs, and most of the names
  * will have to be changed to match your code.
  *
- * There is for a substate machine. Make sure it has a unique name
+- * There is for a substate machine. Make sure it has a unique name
  *
  * This is provided as an example and a good place to start.
  *

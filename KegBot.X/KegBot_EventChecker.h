@@ -50,6 +50,7 @@ uint8_t FRBumperEventChecker(void);
 uint8_t RLBumperEventChecker(void);
 uint8_t RRBumperEventChecker(void);
 uint8_t BeaconDetectionEventChecker(void);
+void readIR(uint8_t flag);
 
 
 #endif	/* EVENTCHECKER_H */

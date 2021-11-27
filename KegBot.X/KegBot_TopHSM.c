@@ -180,7 +180,7 @@ ES_Event RunTopHSM(ES_Event ThisEvent)
             loadNextBall();
 
             InitSearchingSubHSM();
-            
+
             InitRotateAroundTowerSubHSM();
             InitTraversingHSM();
 
@@ -232,19 +232,28 @@ ES_Event RunTopHSM(ES_Event ThisEvent)
 
         }
         break;
-    
-        
+
+
     case Traversing:
-        
+
+        //ES_Timer_InitTimer(GIVE_UP_ON_TOWER_TIMER, 10000);
         //MAKE BOT GO AROUND TOWER ONCE BEFORE CHECKING FOR TRACKWIRE
-        if (ThisEvent.EventType == FRONT_R_BUMP || ThisEvent.EventType == FRONT_L_BUMP) {
+        if (ThisEvent.EventType == FRONT_R_BUMP) {
             CORRECT_TOWER_BUMP_COUNT++;
+            if (CORRECT_TOWER_BUMP_COUNT >= 36) {
+                StopMotors();
+                nextState = NextTower;
+                makeTransition = TRUE;
+                ThisEvent.EventType = ES_NO_EVENT;
+            }
+            //printf("Bump Count =  %i ", CORRECT_TOWER_BUMP_COUNT);
         }
-        
+
         ThisEvent = RunTraversingHSM(ThisEvent);
         //ThisEvent = RunAtTowerSubHSM(ThisEvent);
         switch (ThisEvent.EventType) {
         
+
 
         case TRACK_WIRE_FOUND:
 
@@ -254,15 +263,14 @@ ES_Event RunTopHSM(ES_Event ThisEvent)
                 nextState = Adjusting;
                 makeTransition = TRUE;
                 TRACK_WIRE_ON = TRUE;
-                ThisEvent.EventType = ES_NO_EVENT;
+
 
             }
+            ThisEvent.EventType = ES_NO_EVENT;
             break;
-
-
         }
         break;
-        
+
     case Adjusting:
         //ThisEvent = RunAtFaceSubHSM(ThisEvent);
         switch (ThisEvent.EventType) {
@@ -371,7 +379,7 @@ ES_Event RunTopHSM(ES_Event ThisEvent)
                 ThisEvent.EventType = ES_NO_EVENT;
             }
             if (ThisEvent.EventParam == ROTATE_DELAY) {
-                
+
                 nextState = Jiggle;
                 makeTransition = TRUE;
                 ThisEvent.EventType = ES_NO_EVENT;
@@ -385,7 +393,7 @@ ES_Event RunTopHSM(ES_Event ThisEvent)
         switch (ThisEvent.EventType) {
         case ES_ENTRY:
             LeftMtrSpeed(90, FORWARD);
-            RightMtrSpeed(0, FORWARD);
+            RightMtrSpeed(60, REVERSE);
             ES_Timer_InitTimer(SPIN_TIMER, 300);
 
             ThisEvent.EventType = ES_NO_EVENT;
@@ -393,7 +401,7 @@ ES_Event RunTopHSM(ES_Event ThisEvent)
 
         case FRONT_R_BUMP:
             LeftMtrSpeed(90, REVERSE);
-            RightMtrSpeed(0, FORWARD);
+            RightMtrSpeed(60, FORWARD);
 
             ThisEvent.EventType = ES_NO_EVENT;
             break;
@@ -440,28 +448,53 @@ ES_Event RunTopHSM(ES_Event ThisEvent)
 
 
             //while(1);
-            LeftMtrSpeed(60, FORWARD);
-            RightMtrSpeed(60, FORWARD);
+            LeftMtrSpeed(64, FORWARD);
+            RightMtrSpeed(64, FORWARD);
 
             ThisEvent.EventType = ES_NO_EVENT;
 
             break;
 
+        case FRONT_R_BUMP:
+            LeftMtrSpeed(80, REVERSE);
+            RightMtrSpeed(80, FORWARD);
+            ThisEvent.EventType = ES_NO_EVENT;
+            break;
+        case FRONT_R_BUMP_LOST:
+            LeftMtrSpeed(64, FORWARD);
+            RightMtrSpeed(66, FORWARD);
 
+            ThisEvent.EventType = ES_NO_EVENT;
+
+            break;
+
+        case BACK_R_BUMP:
+            LeftMtrSpeed(80, FORWARD);
+            RightMtrSpeed(80, REVERSE);
+            ThisEvent.EventType = ES_NO_EVENT;
+            break;
+
+        case BACK_R_BUMP_LOST:
+            LeftMtrSpeed(64, REVERSE);
+            RightMtrSpeed(66, REVERSE);
+
+            ThisEvent.EventType = ES_NO_EVENT;
+
+            break;
 
         case OFF_TOWER_R:
 
             StopMotors();
-            LeftMtrSpeed(60, REVERSE);
-            RightMtrSpeed(60, REVERSE);
+            LeftMtrSpeed(72, REVERSE);
+            RightMtrSpeed(64, REVERSE);
             ThisEvent.EventType = ES_NO_EVENT;
 
             break;
         case OFF_TOWER_L:
 
             StopMotors();
-            LeftMtrSpeed(60, FORWARD);
-            RightMtrSpeed(60, FORWARD);
+            LeftMtrSpeed(72, FORWARD);
+            RightMtrSpeed(64, FORWARD);
             ThisEvent.EventType = ES_NO_EVENT;
 
             break;

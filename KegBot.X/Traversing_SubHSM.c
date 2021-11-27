@@ -117,7 +117,10 @@ uint8_t InitTraversingHSM(void) {
 ES_Event RunTraversingHSM(ES_Event ThisEvent) {
     uint8_t makeTransition = FALSE; // use to flag transition
     AtTowerState_t nextState; // <- change type to correct enum
-
+    
+    //USED TO TRACK NUMBER OF TAPE EVENTS
+    static uint8_t TAPE_F_OR_B;
+    //static uint8_t TAPE_L_OR_R;
     ES_Tattle(); // trace call stack
 
     switch (CurrentState) {
@@ -142,15 +145,20 @@ ES_Event RunTraversingHSM(ES_Event ThisEvent) {
          //TO RESULT IN A COLLISION
         case Forward:
             ThisEvent = RunAtTowerSubHSM(ThisEvent);
-            
             switch (ThisEvent.EventType) {
                 case TAPE_LEFT:
                     
                     //FRONT LEFT BUMP ON A COUNTER CLOCK WISE ROTATION MOST LIKELY
                     //MEANS THE BOT WAS TOO CLOSE TO THE TOWER AND SHOULD REVERSE
                     StopMotors();
+                    
+                    //IF TWO OR MORE TAPE SENSORS GO OFF STOP AND CHANGE DIRECTION OF TRAVERSE
+                    if(TAPE_F_OR_B){
                     nextState = Reverse;
                     makeTransition = TRUE;
+                    TAPE_F_OR_B = 0;
+                    }
+                 
                     ThisEvent.EventType = ES_NO_EVENT;
                   
                     break;
@@ -159,18 +167,22 @@ ES_Event RunTraversingHSM(ES_Event ThisEvent) {
                     //FRONT RIGHT BUMP ON A COUNTER CLOCK WISE ROTATION MOST LIKELY
                     //MEANS THE BOT WAS TOO CLOSE TO THE TOWER AND SHOULD REVERSE
                     StopMotors();
+                    if(TAPE_F_OR_B){
                     nextState = Reverse;
                     makeTransition = TRUE;
+                    TAPE_F_OR_B = 0;
+                    }
                     ThisEvent.EventType = ES_NO_EVENT;
                     break;
                 case TAPE_FRONT:
                     
                    //START MANUAEVER AROUND TOWER BEFORE TIMEOUT
                     StopMotors();
-                    nextState = Reverse;
-                    makeTransition = TRUE;
+                    TAPE_F_OR_B = 1;
                     ThisEvent.EventType = ES_NO_EVENT;
                     break;
+                    
+                
                
             }
             break;
@@ -187,8 +199,11 @@ ES_Event RunTraversingHSM(ES_Event ThisEvent) {
                     //FRONT LEFT BUMP ON A COUNTER CLOCK WISE ROTATION MOST LIKELY
                     //MEANS THE BOT WAS TOO CLOSE TO THE TOWER AND SHOULD REVERSE
                     StopMotors();
+                    if(TAPE_F_OR_B){
                     nextState = Forward;
                     makeTransition = TRUE;
+                    TAPE_F_OR_B = 0;
+                    }
                     ThisEvent.EventType = ES_NO_EVENT;
                   
                     break;
@@ -197,16 +212,19 @@ ES_Event RunTraversingHSM(ES_Event ThisEvent) {
                     //FRONT RIGHT BUMP ON A COUNTER CLOCK WISE ROTATION MOST LIKELY
                     //MEANS THE BOT WAS TOO CLOSE TO THE TOWER AND SHOULD REVERSE
                     StopMotors();
+                    if(TAPE_F_OR_B){
                     nextState = Forward;
                     makeTransition = TRUE;
+                    TAPE_F_OR_B = 0;
+                    }
                     ThisEvent.EventType = ES_NO_EVENT;
                     break;
-                case TAPE_FRONT:
+                case TAPE_REAR:
                     
                    //START MANUAEVER AROUND TOWER BEFORE TIMEOUT
                     StopMotors();
-                    nextState = Forward;
-                    makeTransition = TRUE;
+                    TAPE_F_OR_B = 1;
+                    
                     ThisEvent.EventType = ES_NO_EVENT;
                     break;
             }

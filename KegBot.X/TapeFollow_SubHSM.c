@@ -32,6 +32,7 @@
 #include "ES_Framework.h"
 #include "BOARD.h"
 #include "KegBot_TopHSM.h"
+#include "KegBot_EventChecker.h"
 #include "TapeFollow_SubHSM.h"
 #include "GlobalMacros.h"
 #include "MotorControl.h"
@@ -89,7 +90,8 @@ static uint8_t MyPriority;
  *        to rename this to something appropriate.
  *        Returns TRUE if successful, FALSE otherwise
  * @author J. Edward Carryer, 2011.10.23 19:25 */
-uint8_t InitTapeFollowHSM(void) {
+uint8_t InitTapeFollowHSM(void)
+{
     ES_Event returnEvent;
 
     CurrentState = InitPSubState;
@@ -115,7 +117,8 @@ uint8_t InitTapeFollowHSM(void) {
  *       not consumed as these need to pass pack to the higher level state machine.
  * @author J. Edward Carryer, 2011.10.23 19:25
  * @author Gabriel H Elkaim, 2011.10.23 19:25 */
-ES_Event RunTapeFollowHSM(ES_Event ThisEvent) {
+ES_Event RunTapeFollowHSM(ES_Event ThisEvent)
+{
     uint8_t makeTransition = FALSE; // use to flag transition
     AtTowerState_t nextState; // <- change type to correct enum
 
@@ -125,246 +128,247 @@ ES_Event RunTapeFollowHSM(ES_Event ThisEvent) {
     ES_Tattle(); // trace call stack
 
     switch (CurrentState) {
-        case InitPSubState: // If current state is initial Psedudo State
-            if (ThisEvent.EventType == ES_INIT)// only respond to ES_Init
-            {
-                // this is where you would put any actions associated with the
-                // transition from the initial pseudo-state into the actual
-                // initial state
+    case InitPSubState: // If current state is initial Psedudo State
+        if (ThisEvent.EventType == ES_INIT)// only respond to ES_Init
+        {
+            // this is where you would put any actions associated with the
+            // transition from the initial pseudo-state into the actual
+            // initial state
 
-                // now put the machine into the actual initial state
-                nextState = Reverse;
+            // now put the machine into the actual initial state
+            nextState = Reverse;
+            makeTransition = TRUE;
+            ThisEvent.EventType = ES_NO_EVENT;
+        }
+        break;
+
+
+        //STATE AFTER REVERSING TO ADJUST FOR A CLOCKWISE TRAVERSE
+        //ALSO USED AS THE STATE FOR AJUSTING IF SHARP TURN TAKES TOO LONG
+        //TO RESULT IN A COLLISION
+    case RotateCCW:
+
+        switch (ThisEvent.EventType) {
+        case ES_ENTRY:
+
+            //
+            ES_Timer_InitTimer(CCW_ADJUST_TIMER2, 600);
+
+            //CCW ROTATE
+            LeftMtrSpeed(60, REVERSE);
+            RightMtrSpeed(60, FORWARD);
+
+            ThisEvent.EventType = ES_NO_EVENT;
+            break;
+        case TAPE_LEFT:
+
+            //FRONT LEFT BUMP ON A COUNTER CLOCK WISE ROTATION MOST LIKELY
+            //MEANS THE BOT WAS TOO CLOSE TO THE TOWER AND SHOULD REVERSE
+            StopMotors();
+            nextState = Reverse;
+            makeTransition = TRUE;
+            ThisEvent.EventType = ES_NO_EVENT;
+
+            break;
+        case TAPE_RIGHT:
+
+            //FRONT RIGHT BUMP ON A COUNTER CLOCK WISE ROTATION MOST LIKELY
+            //MEANS THE BOT WAS TOO CLOSE TO THE TOWER AND SHOULD REVERSE
+            StopMotors();
+            nextState = Reverse;
+            makeTransition = TRUE;
+            ThisEvent.EventType = ES_NO_EVENT;
+            break;
+        case TAPE_FRONT:
+
+            //START MANUAEVER AROUND TOWER BEFORE TIMEOUT
+            StopMotors();
+            nextState = Reverse;
+            makeTransition = TRUE;
+            ThisEvent.EventType = ES_NO_EVENT;
+            break;
+
+
+        case ES_TIMEOUT:
+            //TIMER THAT TRIGGERS AMOUNT OF TIME FOR CCW ADJUSTMENT
+            if (ThisEvent.EventParam == CCW_ADJUST_TIMER2) {
+                StopMotors();
+                nextState = SharpTurn;
                 makeTransition = TRUE;
                 ThisEvent.EventType = ES_NO_EVENT;
             }
             break;
-        
-            
-         //STATE AFTER REVERSING TO ADJUST FOR A CLOCKWISE TRAVERSE
-         //ALSO USED AS THE STATE FOR AJUSTING IF SHARP TURN TAKES TOO LONG
-         //TO RESULT IN A COLLISION
-        case RotateCCW:
 
-            switch (ThisEvent.EventType) {
-                case ES_ENTRY:
-                    
-                    //
-                    ES_Timer_InitTimer(CCW_ADJUST_TIMER2, 800);   
-             
-                    //CCW ROTATE
-                    LeftMtrSpeed(60, REVERSE);
-                    RightMtrSpeed(60, FORWARD);
-                    
-                    ThisEvent.EventType = ES_NO_EVENT;
-                    break;
-                case TAPE_LEFT:
-                    
-                    //FRONT LEFT BUMP ON A COUNTER CLOCK WISE ROTATION MOST LIKELY
-                    //MEANS THE BOT WAS TOO CLOSE TO THE TOWER AND SHOULD REVERSE
-                    StopMotors();
-                    nextState = Reverse;
-                    makeTransition = TRUE;
-                    ThisEvent.EventType = ES_NO_EVENT;
-                  
-                    break;
-                case TAPE_RIGHT:
-                    
-                    //FRONT RIGHT BUMP ON A COUNTER CLOCK WISE ROTATION MOST LIKELY
-                    //MEANS THE BOT WAS TOO CLOSE TO THE TOWER AND SHOULD REVERSE
-                    StopMotors();
-                    nextState = Reverse;
-                    makeTransition = TRUE;
-                    ThisEvent.EventType = ES_NO_EVENT;
-                    break;
-                case TAPE_FRONT:
-                    
-                   //START MANUAEVER AROUND TOWER BEFORE TIMEOUT
-                    StopMotors();
-                    nextState = Reverse;
-                    makeTransition = TRUE;
-                    ThisEvent.EventType = ES_NO_EVENT;
-                    break;
-                    
-                
-                case ES_TIMEOUT:
-                    //TIMER THAT TRIGGERS AMOUNT OF TIME FOR CCW ADJUSTMENT
-                    if(ThisEvent.EventParam == CCW_ADJUST_TIMER2){
-                        StopMotors();
-                        nextState = SharpTurn;
-                        makeTransition = TRUE;
-                        ThisEvent.EventType = ES_NO_EVENT;
-                    }
-                    break;
-           
-             
-                    
-                default:
-                    break;
-            }
-            break;
-            
-        //CASE FOR TURNING AROUND CORNERS FOR CW TRAVERSE OR AN ADUSTMENT FOR 
-        //CCW REVERSE TRAVERSING
-        case RotateCW:
-     
-            switch (ThisEvent.EventType) {
-                case ES_ENTRY:
-                    
-                    //HERE BASED ON THE CW FLAG A TIMER WILL BE INITILIZED FOR FORWARD
-                    //OR REVERSE TRAVERSING
-                    ES_Timer_InitTimer(CCW_ADJUST_TIMER2, 600);
-                    
-                    LeftMtrSpeed(60, FORWARD);
-                    RightMtrSpeed(60, REVERSE);
-                    
-                    ThisEvent.EventType = ES_NO_EVENT;
-                    break;
 
-//                case FRONT_L_BUMP:
-//                    //IF CW ROTATING AND 
-//                    StopMotors();
-//                    nextState = Reverse;
-//                    makeTransition = TRUE;
-//                    ThisEvent.EventType = ES_NO_EVENT;
-//                  
-//                    break;
-                case TAPE_LEFT:
-                    //CW AJUSTMENT WORKED AND BOT IS HEAD FIRST INTO WALL
-                    //REVERSE, ADJUST, AND CONTINUE SHARP TURNS
-                    StopMotors();
-                    nextState = Reverse;
-                    makeTransition = TRUE;
-                    ThisEvent.EventType = ES_NO_EVENT;
-                    break;
-                case TAPE_FRONT:
-                    //CW AJUSTMENT WORKED AND BOT IS HEAD FIRST INTO WALL
-                    //REVERSE, ADJUST, AND CONTINUE SHARP TURNS
-                    StopMotors();
-                    nextState = Reverse;
-                    makeTransition = TRUE;
-                    ThisEvent.EventType = ES_NO_EVENT;
-                    break;
-                case TAPE_RIGHT:
-                   //START MANUAEVER AROUND TOWER THIS HAPPENS LESS OFTEN THAN THE 
-                    //FRONT BUMP
-                    StopMotors();
-                    nextState = Reverse;
-                    makeTransition = TRUE;
-                    ThisEvent.EventType = ES_NO_EVENT;
-                    break;
-                case ES_TIMEOUT:
-                    //TIMED AJUSTMENT FOR CW TRAVERSING AROUND CORNERS, VERY CLEAN
-                    if(ThisEvent.EventParam == CCW_ADJUST_TIMER2){
-                        StopMotors();
-                        nextState = SharpTurn;
-                        makeTransition = TRUE;
-                        ThisEvent.EventType = ES_NO_EVENT;
-                    }
-                    break;  
-            }
-            break;
-        
-        //COLLSIONS OR TAPE WILL RESULT IN SMALL REVERSE THE AJUSTMENT OR SWITCHED
-        //TRAVERSING DIRECTIONS
-        case Reverse:
-          
-            switch (ThisEvent.EventType) {
-                case ES_ENTRY:
-                    //Reverse
-                    ES_Timer_InitTimer(REVERSE_TIMER1, 1000);
-                    
-                    LeftMtrSpeed(70, REVERSE);
-                    RightMtrSpeed(70, REVERSE);
-                    
-                    ThisEvent.EventType = ES_NO_EVENT;
-                    
-                    break;
 
-                case ES_TIMEOUT:
-                    if(ThisEvent.EventParam == REVERSE_TIMER1){
-                        StopMotors();
-                        nextState = RotateCCW;
-                        makeTransition = TRUE;
-                        ThisEvent.EventType = ES_NO_EVENT;
-                    }
-                    break;
-                    
-//                case BACK_R_BUMP:
-//                    
-//                    StopMotors();
-//                    nextState = SharpTurn;
-//                    makeTransition = TRUE;
-//                    ThisEvent.EventType = ES_NO_EVENT;
-//                    break;
-                  
-            }
-            break;
-        
-        case SharpTurn:
-          
-            switch (ThisEvent.EventType) {
-                case ES_ENTRY:
-                  
-                    ES_Timer_InitTimer(TURN_TIMER, 1000);
-      
-                        
-                    LeftMtrSpeed(90, FORWARD);
-                    RightMtrSpeed(70, FORWARD);
-                    
-                    ThisEvent.EventType = ES_NO_EVENT;
-                    break;
-
-                case ES_TIMEOUT:
-                    if(ThisEvent.EventParam == TURN_TIMER){
-                        StopMotors();
-                        nextState = RotateCW;
-                        makeTransition = TRUE;
-                        ThisEvent.EventType = ES_NO_EVENT;
-                    }
-                    break;
-                case TAPE_FRONT:
-                    StopMotors();//reverse or some shit
-                    nextState = Reverse;
-                    makeTransition = TRUE;
-                    ThisEvent.EventType = ES_NO_EVENT;
-                  
-                    break;
-                case TAPE_RIGHT:
-                
-                    StopMotors();
-                    nextState = Reverse;
-                    makeTransition = TRUE;
-                    ThisEvent.EventType = ES_NO_EVENT;
-                    break;
-                case TAPE_LEFT:
-                    printf("This should not be happening");
-                    // SET STATIC VARIABLE TO LET CCW ROTATE TO GO LONGER
-                    StopMotors();
-                    nextState = Reverse;
-                    makeTransition = TRUE;
-                    ThisEvent.EventType = ES_NO_EVENT;
-                    break;
-//                case TAPE_FRONT:
-//                     StopMotors();
-//                        ThisEvent.EventType = ES_NO_EVENT;
-//                    break;
-//                case TAPE_REAR:
-//                    StopMotors();
-//                        ThisEvent.EventType = ES_NO_EVENT;
-//                    break;
-//                case TAPE_LEFT:
-//                    StopMotors();
-//                        ThisEvent.EventType = ES_NO_EVENT;
-//                    break;
-//                case TAPE_RIGHT:
-//                    StopMotors();
-//                        ThisEvent.EventType = ES_NO_EVENT;
-//                    break;
-                  
-            }
-            break;
         default:
             break;
+        }
+        break;
+
+        //CASE FOR TURNING AROUND CORNERS FOR CW TRAVERSE OR AN ADUSTMENT FOR 
+        //CCW REVERSE TRAVERSING
+    case RotateCW:
+
+        switch (ThisEvent.EventType) {
+        case ES_ENTRY:
+
+            //HERE BASED ON THE CW FLAG A TIMER WILL BE INITILIZED FOR FORWARD
+            //OR REVERSE TRAVERSING
+            ES_Timer_InitTimer(CCW_ADJUST_TIMER2, 800);
+
+            LeftMtrSpeed(60, FORWARD);
+            RightMtrSpeed(60, REVERSE);
+
+            ThisEvent.EventType = ES_NO_EVENT;
+            break;
+
+            //                case FRONT_L_BUMP:
+            //                    //IF CW ROTATING AND 
+            //                    StopMotors();
+            //                    nextState = Reverse;
+            //                    makeTransition = TRUE;
+            //                    ThisEvent.EventType = ES_NO_EVENT;
+            //                  
+            //                    break;
+        case TAPE_LEFT:
+            //CW AJUSTMENT WORKED AND BOT IS HEAD FIRST INTO WALL
+            //REVERSE, ADJUST, AND CONTINUE SHARP TURNS
+            StopMotors();
+            nextState = Reverse;
+            makeTransition = TRUE;
+            ThisEvent.EventType = ES_NO_EVENT;
+            break;
+        case TAPE_FRONT:
+            //CW AJUSTMENT WORKED AND BOT IS HEAD FIRST INTO WALL
+            //REVERSE, ADJUST, AND CONTINUE SHARP TURNS
+            StopMotors();
+            nextState = Reverse;
+            makeTransition = TRUE;
+            ThisEvent.EventType = ES_NO_EVENT;
+            break;
+        case TAPE_RIGHT:
+            //START MANUAEVER AROUND TOWER THIS HAPPENS LESS OFTEN THAN THE 
+            //FRONT BUMP
+            StopMotors();
+            nextState = Reverse;
+            makeTransition = TRUE;
+            ThisEvent.EventType = ES_NO_EVENT;
+            break;
+        case ES_TIMEOUT:
+            //TIMED AJUSTMENT FOR CW TRAVERSING AROUND CORNERS, VERY CLEAN
+            if (ThisEvent.EventParam == CCW_ADJUST_TIMER2) {
+                StopMotors();
+                nextState = SharpTurn;
+                makeTransition = TRUE;
+                ThisEvent.EventType = ES_NO_EVENT;
+            }
+            break;
+        }
+        break;
+
+        //COLLSIONS OR TAPE WILL RESULT IN SMALL REVERSE THE AJUSTMENT OR SWITCHED
+        //TRAVERSING DIRECTIONS
+    case Reverse:
+        readIR(FALSE);
+        switch (ThisEvent.EventType) {
+        case ES_ENTRY:
+            //Reverse
+            ES_Timer_InitTimer(REVERSE_TIMER1, 1000);
+
+            LeftMtrSpeed(70, REVERSE);
+            RightMtrSpeed(70, REVERSE);
+
+            ThisEvent.EventType = ES_NO_EVENT;
+
+            break;
+
+        case ES_TIMEOUT:
+            if (ThisEvent.EventParam == REVERSE_TIMER1) {
+                StopMotors();
+                nextState = RotateCW;
+                makeTransition = TRUE;
+                ThisEvent.EventType = ES_NO_EVENT;
+            }
+            break;
+
+            //                case BACK_R_BUMP:
+            //                    
+            //                    StopMotors();
+            //                    nextState = SharpTurn;
+            //                    makeTransition = TRUE;
+            //                    ThisEvent.EventType = ES_NO_EVENT;
+            //                    break;
+        case ES_EXIT:
+            readIR(TRUE);
+            break;
+        }
+        break;
+
+    case SharpTurn:
+
+        switch (ThisEvent.EventType) {
+        case ES_ENTRY:
+
+            ES_Timer_InitTimer(TURN_TIMER, 1000);
+
+
+            LeftMtrSpeed(70, FORWARD);
+            RightMtrSpeed(90, FORWARD);
+
+            ThisEvent.EventType = ES_NO_EVENT;
+            break;
+
+        case ES_TIMEOUT:
+            if (ThisEvent.EventParam == TURN_TIMER) {
+                StopMotors();
+                nextState = RotateCCW;
+                makeTransition = TRUE;
+                ThisEvent.EventType = ES_NO_EVENT;
+            }
+            break;
+        case TAPE_FRONT:
+            StopMotors(); //reverse or some shit
+            nextState = Reverse;
+            makeTransition = TRUE;
+            ThisEvent.EventType = ES_NO_EVENT;
+
+            break;
+        case TAPE_RIGHT:
+
+            StopMotors();
+            nextState = Reverse;
+            makeTransition = TRUE;
+            ThisEvent.EventType = ES_NO_EVENT;
+            break;
+        case TAPE_LEFT:
+
+            StopMotors();
+            nextState = Reverse;
+            makeTransition = TRUE;
+            ThisEvent.EventType = ES_NO_EVENT;
+            break;
+            //                case TAPE_FRONT:
+            //                     StopMotors();
+            //                        ThisEvent.EventType = ES_NO_EVENT;
+            //                    break;
+            //                case TAPE_REAR:
+            //                    StopMotors();
+            //                        ThisEvent.EventType = ES_NO_EVENT;
+            //                    break;
+            //                case TAPE_LEFT:
+            //                    StopMotors();
+            //                        ThisEvent.EventType = ES_NO_EVENT;
+            //                    break;
+            //                case TAPE_RIGHT:
+            //                    StopMotors();
+            //                        ThisEvent.EventType = ES_NO_EVENT;
+            //                    break;
+
+        }
+        break;
+    default:
+        break;
     } // end switch on Current State
 
     if (makeTransition == TRUE) { // making a state transition, send EXIT and ENTRY

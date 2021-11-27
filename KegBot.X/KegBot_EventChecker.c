@@ -69,6 +69,7 @@ static int FLBUFFER = 0;
 static int FRBUFFER = 0;
 static int RLBUFFER = 0;
 static int RRBUFFER = 0;
+static uint8_t READIR = 1;
 /* Any private module level variable that you might need for keeping track of
    events would be placed here. Private variables should be STATIC so that they
    are limited in scope to this module. */
@@ -257,6 +258,7 @@ uint8_t RRBumperEventChecker(void) {
 uint8_t BeaconDetectionEventChecker(void) {
     //printf("beacon event checker\r\n");
     // stores the last state for tracking events
+    if(READIR == 1){
     static ES_EventTyp_t lastEvent = ES_NO_EVENT;
     // the hysteresis threshold
     static unsigned int threshold = BEACON_LOWER_THRESHOLD;
@@ -298,7 +300,14 @@ uint8_t BeaconDetectionEventChecker(void) {
     // updates the event history and returns
     
     return (returnVal);
-   
+    }
+    else{
+        return 0;
+    }
+}
+
+void readIR(uint8_t flag){
+    READIR = flag; 
 }
 
 

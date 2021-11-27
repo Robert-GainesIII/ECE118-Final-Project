@@ -32,6 +32,7 @@
 #include "ES_Framework.h"
 #include "BOARD.h"
 #include "KegBot_TopHSM.h"
+#include "KegBot_EventChecker.h"
 #include "SearchForTower_SubHSM.h"
 #include "TapeFollow_SubHSM.h"
 #include "MotorControl.h"
@@ -147,6 +148,7 @@ ES_Event RunSearchingSubHSM(ES_Event ThisEvent)
 
         switch (ThisEvent.EventType) {
         case ES_ENTRY:
+            readIR(TRUE);
             if (LOST_BEACON == 1) {
                 ES_Timer_InitTimer(CCW_ADJUST_TIMER, 600);
             }

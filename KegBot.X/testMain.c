@@ -62,7 +62,7 @@ void main(void)
 //  
     for (int i = 0; i < 10; i++){
       loadNextBall(); 
-      for (int j = 0; j < 1000000; j++){}
+      for (int j = 0; j < 2000000; j++){}
       setSolenoid(SOLENOID_ON);
         for(int k = 0; k < 100000; k++){
 
