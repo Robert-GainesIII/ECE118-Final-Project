@@ -269,7 +269,7 @@ uint8_t BeaconDetectionEventChecker(void) {
     uint8_t returnVal = FALSE;
     uint16_t curr_lvl = AD_ReadADPin(BEACON_DETECTOR_PIN); // read the light level
     static int i = 0;
-    if (i++ % 1000 == 0){printf("Beacon Detector Value: %u \r\n", AD_ReadADPin(BEACON_DETECTOR_PIN));}
+    //if (i++ % 1000 == 0){printf("Beacon Detector Value: %u \r\n", AD_ReadADPin(BEACON_DETECTOR_PIN));}
 
     // changes the threshold if a transition over the current threshold occurs
     // sets the relevant return event
@@ -302,7 +302,7 @@ uint8_t BeaconDetectionEventChecker(void) {
     return (returnVal);
     }
     else{
-        printf("IR CHECKER IS TURNED OFF!!!!");
+        //printf("IR CHECKER IS TURNED OFF!!!!");
         return 0;
     }
 }

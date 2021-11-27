@@ -216,7 +216,7 @@ ES_Event RunAtTowerSubHSM(ES_Event ThisEvent) {
                     LeftMtrSpeed(65, FORWARD);
                     RightMtrSpeed(65, REVERSE);
                     
-                    ThisEvent.EventType = ES_NO_EVENT;
+                    //ThisEvent.EventType = ES_NO_EVENT;
                     break;
 
 //                case FRONT_L_BUMP:
@@ -267,7 +267,7 @@ ES_Event RunAtTowerSubHSM(ES_Event ThisEvent) {
                     LeftMtrSpeed(MOTORSPEED, REVERSE);
                     RightMtrSpeed(MOTORSPEED, REVERSE);
                     
-                    ThisEvent.EventType = ES_NO_EVENT;
+                    //ThisEvent.EventType = ES_NO_EVENT;
                     
                     break;
 
@@ -303,7 +303,7 @@ ES_Event RunAtTowerSubHSM(ES_Event ThisEvent) {
                     LeftMtrSpeed(85, FORWARD);
                     RightMtrSpeed(70, FORWARD);
                     
-                    ThisEvent.EventType = ES_NO_EVENT;
+                    //ThisEvent.EventType = ES_NO_EVENT;
                     break;
 
                 case ES_TIMEOUT:

@@ -153,7 +153,7 @@ ES_Event RunRotateAroundTowerHSM(ES_Event ThisEvent) {
                     LeftMtrSpeed(70, FORWARD);
                     RightMtrSpeed(70, REVERSE);
 
-                    ThisEvent.EventType = ES_NO_EVENT;
+                    //ThisEvent.EventType = ES_NO_EVENT;
                     break;
                 case FRONT_R_BUMP:
 
@@ -194,7 +194,7 @@ ES_Event RunRotateAroundTowerHSM(ES_Event ThisEvent) {
                     LeftMtrSpeed(70, REVERSE);
                     RightMtrSpeed(70, FORWARD);
 
-                    ThisEvent.EventType = ES_NO_EVENT;
+                    //ThisEvent.EventType = ES_NO_EVENT;
                     break;
 
                 case BACK_R_BUMP:
@@ -237,7 +237,7 @@ ES_Event RunRotateAroundTowerHSM(ES_Event ThisEvent) {
                     LeftMtrSpeed(MOTORSPEED, FORWARD);
                     RightMtrSpeed(MOTORSPEED, FORWARD);
 
-                    ThisEvent.EventType = ES_NO_EVENT;
+                    //ThisEvent.EventType = ES_NO_EVENT;
 
                     break;
 
@@ -273,7 +273,7 @@ ES_Event RunRotateAroundTowerHSM(ES_Event ThisEvent) {
                     LeftMtrSpeed(85, REVERSE);
                     RightMtrSpeed(70, REVERSE);
 
-                    ThisEvent.EventType = ES_NO_EVENT;
+                    //ThisEvent.EventType = ES_NO_EVENT;
                     break;
 
                 case ES_TIMEOUT:
