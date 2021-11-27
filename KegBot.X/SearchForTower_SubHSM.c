@@ -205,38 +205,6 @@ ES_Event RunSearchingSubHSM(ES_Event ThisEvent)
             ThisEvent.EventType = ES_NO_EVENT;
             break;
 
-        case TAPE_FRONT:
-            StopMotors();
-            readIR(FALSE);
-            nextState = TapeFollow;
-            makeTransition = TRUE;
-
-            ThisEvent.EventType = ES_NO_EVENT;
-            break;
-        case TAPE_REAR:
-            StopMotors();
-            readIR(FALSE);
-            nextState = TapeFollow;
-            makeTransition = TRUE;
-
-            ThisEvent.EventType = ES_NO_EVENT;
-            break;
-        case TAPE_LEFT:
-            StopMotors();
-            readIR(FALSE);
-            nextState = TapeFollow;
-            makeTransition = TRUE;
-
-            ThisEvent.EventType = ES_NO_EVENT;
-            break;
-        case TAPE_RIGHT:
-            StopMotors();
-            readIR(FALSE);
-            nextState = TapeFollow;
-            makeTransition = TRUE;
-
-            ThisEvent.EventType = ES_NO_EVENT;
-            break;
 
 
         default: // all unhandled events pass the event back up to the next level
@@ -346,37 +314,7 @@ ES_Event RunSearchingSubHSM(ES_Event ThisEvent)
         default: // all unhandled events pass the event back up to the next level
             break;
         }
-        break;
-
-    case TapeFollow:
-        readIR(FALSE);
-        ThisEvent = RunTapeFollowHSM(ThisEvent);
-        readIR(TRUE);
-        switch (ThisEvent.EventType) {
-            
-        case IR_FOUND:
-            //STOP MOTORS AS SOON AS BEACON IS DETECTED
-            StopMotors();
-            nextState = Moving_To_Tower;
-            makeTransition = TRUE;
-            ThisEvent.EventType = ES_NO_EVENT;
-            break;
-      
-        case FRONT_L_BUMP:
-            nextState = Moving_To_Tower;
-            makeTransition = TRUE;
-
-            //printf("FRONT LEFT BUMP!");
-            ThisEvent.EventType = ES_NO_EVENT;
-            break;
-        case FRONT_R_BUMP:
-            nextState = Moving_To_Tower;
-            makeTransition = TRUE;
-
-            //printf("FRONT RIGHT BUMP!");
-            ThisEvent.EventType = ES_NO_EVENT;
-            break;
-        }
+        
         break;
     default: // all unhandled states fall into here
         break;

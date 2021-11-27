@@ -33,6 +33,7 @@
 #include "KegBot_TopHSM.h"
 #include "SearchForTower_SubHSM.h" //#include all sub state machines called
 #include "Traversing_SubHSM.h"
+#include "TapeFollow_SubHSM.h"
 #include "MotorControl.h"
 #include "GlobalMacros.h"
 #include <stdio.h>
@@ -56,6 +57,7 @@ typedef enum {
     Jiggle,
     Adjusting,
     NextTower,
+    CurveForTape,
     TapeFollow,
     FindTape,
 
@@ -69,6 +71,7 @@ static const char *StateNames[] = {
 	"Jiggle",
 	"Adjusting",
 	"NextTower",
+	"CurveForTape",
 	"TapeFollow",
 	"FindTape",
 };
@@ -192,10 +195,8 @@ ES_Event RunTopHSM(ES_Event ThisEvent)
         }
         break;
 
-    case Searching: // in the first state, replace this with correct names
-        // run sub-state machine for this state
-        //NOTE: the SubState Machine runs and responds to events before anything in the this
-        //state machine does
+    case Searching: // in the first state
+
         ThisEvent = RunSearchingSubHSM(ThisEvent);
         switch (ThisEvent.EventType) {
 
@@ -214,22 +215,28 @@ ES_Event RunTopHSM(ES_Event ThisEvent)
             ThisEvent.EventType = ES_NO_EVENT;
             break;
 
-            //                case BACK_R_BUMP:
-            //                    nextState = Traversing;
-            //                    makeTransition = TRUE;
-            //                    ThisEvent.EventType = ES_NO_EVENT;
-            //                    printf("BACK LEFT BUMP!");
-            //                    ThisEvent.EventType = ES_NO_EVENT;
-            //                    break;
-            //                case BACK_L_BUMP:
-            //                    nextState = Traversing;
-            //                    makeTransition = TRUE;
-            //                    ThisEvent.EventType = ES_NO_EVENT;
-            //                    printf("BACK RIGHT BUMP!");
-            //                    ThisEvent.EventType = ES_NO_EVENT;
-            //                    break;
+        case TAPE_FRONT:
+            nextState = TapeFollow;
+            makeTransition = TRUE;
+            ThisEvent.EventType = ES_NO_EVENT;
+            break;
+        case TAPE_REAR:
+            nextState = TapeFollow;
+            makeTransition = TRUE;
+            ThisEvent.EventType = ES_NO_EVENT;
+            break;
 
+        case TAPE_LEFT:
+            nextState = TapeFollow;
+            makeTransition = TRUE;
+            ThisEvent.EventType = ES_NO_EVENT;
+            break;
 
+        case TAPE_RIGHT:
+            nextState = TapeFollow;
+            makeTransition = TRUE;
+            ThisEvent.EventType = ES_NO_EVENT;
+            break;
         }
         break;
 
@@ -253,20 +260,17 @@ ES_Event RunTopHSM(ES_Event ThisEvent)
         ThisEvent = RunTraversingHSM(ThisEvent);
         //ThisEvent = RunAtTowerSubHSM(ThisEvent);
         switch (ThisEvent.EventType) {
-        
+
 
 
         case TRACK_WIRE_FOUND:
 
-            if (CORRECT_TOWER_BUMP_COUNT > 6) {
 
-                StopMotors();
-                nextState = Adjusting;
-                makeTransition = TRUE;
-                TRACK_WIRE_ON = TRUE;
+            StopMotors();
+            nextState = Adjusting;
+            makeTransition = TRUE;
+            TRACK_WIRE_ON = TRUE;
 
-
-            }
             ThisEvent.EventType = ES_NO_EVENT;
             break;
         }
@@ -314,17 +318,6 @@ ES_Event RunTopHSM(ES_Event ThisEvent)
             break;
 
 
-            //OPTIONAL CHECK FOR TAPE PARALLEL ALIGNMENT
-            //                case PARALLEL:
-            //                    if(FR_BUMP_ON){
-            //                    StopMotors();
-            //                    while(1);
-            //                    nextState = FindTape;
-            //                    makeTransition = TRUE;
-            //                    }
-            //                    ThisEvent.EventType = ES_NO_EVENT;
-            //                    break;
-
         case FRONT_R_BUMP:
 
             FR_BUMP_ON = TRUE;
@@ -348,11 +341,6 @@ ES_Event RunTopHSM(ES_Event ThisEvent)
 
             ThisEvent.EventType = ES_NO_EVENT;
             break;
-            //                case FRONT_R_BUMP_LOST:
-            //                    
-            //                    FR_BUMP_ON = FALSE;
-            //                    ThisEvent.EventType = ES_NO_EVENT;
-            //                    break;
 
 
 
@@ -393,39 +381,29 @@ ES_Event RunTopHSM(ES_Event ThisEvent)
     case Jiggle:
         switch (ThisEvent.EventType) {
         case ES_ENTRY:
-            LeftMtrSpeed(90, FORWARD);
-            RightMtrSpeed(60, REVERSE);
-            ES_Timer_InitTimer(SPIN_TIMER, 300);
-
-            ThisEvent.EventType = ES_NO_EVENT;
-            break;
-
-        case FRONT_R_BUMP:
-            LeftMtrSpeed(90, REVERSE);
+            LeftMtrSpeed(100, REVERSE);
             RightMtrSpeed(60, FORWARD);
+            ES_Timer_InitTimer(SPIN_TIMER, 100);
+            break;
+        case ES_TIMEOUT:
+            if (ThisEvent.EventParam == SPIN_TIMER) {
+                LeftMtrSpeed(100, FORWARD);
+                RightMtrSpeed(60, REVERSE);
+                ES_Timer_InitTimer(ROTATE_DELAY, 100);
+                ThisEvent.EventType = ES_NO_EVENT;
+            }
+            if (ThisEvent.EventParam == ROTATE_DELAY) {
+                StopMotors();
+                nextState = NextTower;
+                makeTransition = TRUE;
+                ThisEvent.EventType = ES_NO_EVENT;
 
+            }
             ThisEvent.EventType = ES_NO_EVENT;
             break;
-        case BACK_R_BUMP:
-            nextState = NextTower;
-            makeTransition = TRUE;
-            loadNextBall();
-            ThisEvent.EventType = ES_NO_EVENT;
 
-            break;
-            //                case ES_TIMEOUT:
-            //                    
-            //                    if (ThisEvent.EventParam == SPIN_TIMER) {
-            //                        //StopMotors();
-            //                        LeftMtrSpeed(90, FORWARD);
-            //                        RightMtrSpeed(0, FORWARD);
-            //                        nextState = NextTower;
-            //                        makeTransition = TRUE;
-            //                        ThisEvent.EventType = ES_NO_EVENT;
-            //                        
-            //                    }
-            //                    break;
         }
+
 
         break;
 
@@ -438,7 +416,47 @@ ES_Event RunTopHSM(ES_Event ThisEvent)
             nextState = Searching;
             makeTransition = TRUE;
             ThisEvent.EventType = ES_NO_EVENT;
+            break;
+
+        case TAPE_REAR:
+            nextState = CurveForTape;
+            makeTransition = TRUE;
+            ThisEvent.EventType = ES_NO_EVENT;
+            break;
+
+        case TAPE_LEFT:
+            nextState = CurveForTape;
+            makeTransition = TRUE;
+            ThisEvent.EventType = ES_NO_EVENT;
+            break;
         }
+
+        break;
+
+    case CurveForTape:
+
+        switch (ThisEvent.EventType) {
+        case ES_ENTRY:
+
+            RightMtrSpeed(90, FORWARD);
+            LeftMtrSpeed(65, FORWARD);
+            ThisEvent.EventType = ES_NO_EVENT;
+            break;
+
+
+        case TAPE_FRONT:
+            nextState = TapeFollow;
+            makeTransition = TRUE;
+            ThisEvent.EventType = ES_NO_EVENT;
+            break;
+
+            //        case TAPE_RIGHT:
+            //            nextState = TapeFollow;
+            //            makeTransition = TRUE;
+            //            ThisEvent.EventType = ES_NO_EVENT;
+            //            break;
+        }
+
         break;
 
 
@@ -509,6 +527,20 @@ ES_Event RunTopHSM(ES_Event ThisEvent)
 
         }
         break;
+
+    case TapeFollow:
+        ThisEvent = RunTapeFollowHSM(ThisEvent);
+
+        switch (ThisEvent.EventType) {
+        case IR_FOUND:
+            nextState = Searching;
+            makeTransition = TRUE;
+            ThisEvent.EventType = ES_NO_EVENT;
+            break;
+
+        }
+        break;
+
 
     default:
         printf("invalid state in top HSM\r\n");
