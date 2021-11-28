@@ -258,7 +258,7 @@ uint8_t RRBumperEventChecker(void) {
 uint8_t BeaconDetectionEventChecker(void) {
     //printf("beacon event checker\r\n");
     // stores the last state for tracking events
-    if(READIR == 1){
+    if(READIR = 1){
     static ES_EventTyp_t lastEvent = ES_NO_EVENT;
     // the hysteresis threshold
     static unsigned int threshold = BEACON_LOWER_THRESHOLD;
@@ -302,7 +302,6 @@ uint8_t BeaconDetectionEventChecker(void) {
     return (returnVal);
     }
     else{
-        //printf("IR CHECKER IS TURNED OFF!!!!");
         return 0;
     }
 }

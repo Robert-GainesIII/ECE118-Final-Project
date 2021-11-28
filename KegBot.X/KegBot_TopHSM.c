@@ -34,6 +34,7 @@
 #include "SearchForTower_SubHSM.h" //#include all sub state machines called
 #include "Traversing_SubHSM.h"
 #include "TapeFollow_SubHSM.h"
+#include "bumpers.h"
 #include "MotorControl.h"
 #include "GlobalMacros.h"
 #include <stdio.h>
@@ -51,6 +52,7 @@
 
 typedef enum {
     InitPState,
+    Rotating,
     Searching,
     Traversing,
     Shooting,
@@ -65,6 +67,7 @@ typedef enum {
 
 static const char *StateNames[] = {
 	"InitPState",
+	"Rotating",
 	"Searching",
 	"Traversing",
 	"Shooting",
@@ -163,7 +166,12 @@ ES_Event RunTopHSM(ES_Event ThisEvent)
     // 2=cw rotate
     // 3=forward blip
     // pulls out when both are pressed
-    static int SHIMMY_STATE = 0;
+
+    //0 for forward 1 for reverse
+    static int TAPEDIR = 0;
+    static int JIG = 0;
+    static int IN_FIELD = 0;
+    static int BUMPCOUNTFORTAPE = 0;
     static int DIR = 0;
     static int FR_BUMP_ON = TRUE;
     static int RR_BUMP_ON = FALSE;
@@ -188,10 +196,26 @@ ES_Event RunTopHSM(ES_Event ThisEvent)
             InitTraversingHSM();
 
             // now put the machine into the actual initial state
-            nextState = Searching;
+            nextState = Rotating;
             makeTransition = TRUE;
             ThisEvent.EventType = ES_NO_EVENT;
 
+        }
+        break;
+
+    case Rotating:
+        switch (ThisEvent.EventType) {
+        case ES_ENTRY:
+            LeftMtrSpeed(70, FORWARD);
+            RightMtrSpeed(70, REVERSE);
+            ThisEvent.EventType = ES_NO_EVENT;
+            break;
+
+        case IR_FOUND:
+            nextState = Searching;
+            makeTransition = TRUE;
+            ThisEvent.EventType = ES_NO_EVENT;
+            break;
         }
         break;
 
@@ -200,7 +224,9 @@ ES_Event RunTopHSM(ES_Event ThisEvent)
         ThisEvent = RunSearchingSubHSM(ThisEvent);
         switch (ThisEvent.EventType) {
 
+
         case FRONT_L_BUMP:
+
             nextState = Traversing;
             makeTransition = TRUE;
 
@@ -208,6 +234,7 @@ ES_Event RunTopHSM(ES_Event ThisEvent)
             ThisEvent.EventType = ES_NO_EVENT;
             break;
         case FRONT_R_BUMP:
+
             nextState = Traversing;
             makeTransition = TRUE;
 
@@ -216,27 +243,36 @@ ES_Event RunTopHSM(ES_Event ThisEvent)
             break;
 
         case TAPE_FRONT:
+
             nextState = TapeFollow;
             makeTransition = TRUE;
+
             ThisEvent.EventType = ES_NO_EVENT;
             break;
         case TAPE_REAR:
+
             nextState = TapeFollow;
             makeTransition = TRUE;
+
             ThisEvent.EventType = ES_NO_EVENT;
             break;
 
         case TAPE_LEFT:
+
             nextState = TapeFollow;
             makeTransition = TRUE;
+
             ThisEvent.EventType = ES_NO_EVENT;
             break;
 
         case TAPE_RIGHT:
+
             nextState = TapeFollow;
             makeTransition = TRUE;
+
             ThisEvent.EventType = ES_NO_EVENT;
             break;
+
         }
         break;
 
@@ -245,30 +281,36 @@ ES_Event RunTopHSM(ES_Event ThisEvent)
 
         //ES_Timer_InitTimer(GIVE_UP_ON_TOWER_TIMER, 10000);
         //MAKE BOT GO AROUND TOWER ONCE BEFORE CHECKING FOR TRACKWIRE
-      
+        if (ThisEvent.EventType == FRONT_R_BUMP || ThisEvent.EventType == FRONT_L_BUMP) {
+            CORRECT_TOWER_BUMP_COUNT++;
+        }
 
         ThisEvent = RunTraversingHSM(ThisEvent);
         //ThisEvent = RunAtTowerSubHSM(ThisEvent);
         switch (ThisEvent.EventType) {
-            
+
         case ES_ENTRY:
             printf("SPAM");
-            ES_Timer_InitTimer(GIVE_UP_ON_TOWER_TIMER, 20000);
+            ES_Timer_InitTimer(GIVE_UP_ON_TOWER_TIMER, 30000);
 
             ThisEvent.EventType = ES_NO_EVENT;
             break;
 
         case TRACK_WIRE_FOUND:
 
+            if (CORRECT_TOWER_BUMP_COUNT >= 2) {
 
-            StopMotors();
-            nextState = Adjusting;
-            makeTransition = TRUE;
-            TRACK_WIRE_ON = TRUE;
+
+                StopMotors();
+                nextState = Adjusting;
+                makeTransition = TRUE;
+                TRACK_WIRE_ON = TRUE;
+                CORRECT_TOWER_BUMP_COUNT = 0;
+            }
 
             ThisEvent.EventType = ES_NO_EVENT;
             break;
-        
+
         case ES_TIMEOUT:
             // 0 = right blip
             // 1 = left blip
@@ -277,23 +319,31 @@ ES_Event RunTopHSM(ES_Event ThisEvent)
 
                 StopMotors();
                 nextState = NextTower;
+                CORRECT_TOWER_BUMP_COUNT = 0;
                 makeTransition = TRUE;
 
             }
             ThisEvent.EventType = ES_NO_EVENT;
             break;
-        }   
+        case ES_EXIT:
+            InitTraversingHSM();
+            ThisEvent.EventType = ES_NO_EVENT;
+            break;
+        }
+
+
+
         break;
 
     case Adjusting:
         //ThisEvent = RunAtFaceSubHSM(ThisEvent);
         switch (ThisEvent.EventType) {
         case ES_ENTRY:
-            LeftMtrSpeed(70, FORWARD);
-            RightMtrSpeed(60, FORWARD);
+            LeftMtrSpeed(100, FORWARD);
+            RightMtrSpeed(0, FORWARD);
             ES_Timer_StopTimer(CCW_ADJUST_TIMER);
             ES_Timer_StopTimer(CCW_ADJUST_TIMER2);
-            ES_Timer_InitTimer(FORWARD_TIME, 300);
+            ES_Timer_InitTimer(FORWARD_TIME, 600);
 
             ThisEvent.EventType = ES_NO_EVENT;
             break;
@@ -309,17 +359,19 @@ ES_Event RunTopHSM(ES_Event ThisEvent)
                 ThisEvent.EventType = ES_NO_EVENT;
 
             }
-            if (ThisEvent.EventParam == CCW_ADJUST_TIMER) {
-
-                LeftMtrSpeed(90, FORWARD);
-                RightMtrSpeed(60, FORWARD);
-                ThisEvent.EventType = ES_NO_EVENT;
-
-            }
+            //            if (ThisEvent.EventParam == CCW_ADJUST_TIMER) {
+            //
+            //                LeftMtrSpeed(90, FORWARD);
+            //                RightMtrSpeed(60, FORWARD);
+            //                ThisEvent.EventType = ES_NO_EVENT;
+            //
+            //            }
             if (ThisEvent.EventParam == FORWARD_TIME) {
-                ES_Timer_InitTimer(CCW_ADJUST_TIMER, 400);
-                LeftMtrSpeed(70, FORWARD);
-                RightMtrSpeed(70, REVERSE);
+
+                frontTime = TIMERS_GetTime();
+                printf("FRONT BUMP\r\n");
+                LeftMtrSpeed(60, REVERSE);
+                RightMtrSpeed(0, FORWARD);
                 ThisEvent.EventType = ES_NO_EVENT;
 
             }
@@ -390,15 +442,27 @@ ES_Event RunTopHSM(ES_Event ThisEvent)
     case Jiggle:
         switch (ThisEvent.EventType) {
         case ES_ENTRY:
-            LeftMtrSpeed(100, REVERSE);
-            RightMtrSpeed(60, FORWARD);
-            ES_Timer_InitTimer(SPIN_TIMER, 100);
+            if (FRBumperIsPressed() == FALSE) {
+                JIG = 0;
+                LeftMtrSpeed(90, FORWARD);
+                RightMtrSpeed(60, REVERSE);
+            } else {
+                JIG = 1;
+                LeftMtrSpeed(90, REVERSE);
+                RightMtrSpeed(60, FORWARD);
+            }
+            ES_Timer_InitTimer(SPIN_TIMER, 200);
             break;
         case ES_TIMEOUT:
             if (ThisEvent.EventParam == SPIN_TIMER) {
-                LeftMtrSpeed(100, FORWARD);
-                RightMtrSpeed(60, REVERSE);
-                ES_Timer_InitTimer(ROTATE_DELAY, 100);
+                if (JIG == 0) {
+                    LeftMtrSpeed(90, REVERSE);
+                    RightMtrSpeed(60, FORWARD);
+                } else {
+                    LeftMtrSpeed(90, FORWARD);
+                    RightMtrSpeed(60, REVERSE);
+                }
+                ES_Timer_InitTimer(ROTATE_DELAY, 200);
                 ThisEvent.EventType = ES_NO_EVENT;
             }
             if (ThisEvent.EventParam == ROTATE_DELAY) {
@@ -452,13 +516,15 @@ ES_Event RunTopHSM(ES_Event ThisEvent)
             LeftMtrSpeed(65, FORWARD);
             ThisEvent.EventType = ES_NO_EVENT;
             break;
-            
+
         case FRONT_R_BUMP:
+
             nextState = Traversing;
             makeTransition = TRUE;
             ThisEvent.EventType = ES_NO_EVENT;
             break;
         case FRONT_L_BUMP:
+
             nextState = Traversing;
             makeTransition = TRUE;
             ThisEvent.EventType = ES_NO_EVENT;
@@ -489,7 +555,7 @@ ES_Event RunTopHSM(ES_Event ThisEvent)
             //while(1);
             LeftMtrSpeed(64, FORWARD);
             RightMtrSpeed(64, FORWARD);
-
+            // ES_Timer_InitTimer(GIVE_UP_ON_TOWER_TIMER, 300);
             ThisEvent.EventType = ES_NO_EVENT;
 
             break;
@@ -508,6 +574,7 @@ ES_Event RunTopHSM(ES_Event ThisEvent)
             break;
 
         case BACK_R_BUMP:
+            BUMPCOUNTFORTAPE = 1;
             LeftMtrSpeed(80, FORWARD);
             RightMtrSpeed(80, REVERSE);
             ThisEvent.EventType = ES_NO_EVENT;
@@ -522,27 +589,51 @@ ES_Event RunTopHSM(ES_Event ThisEvent)
             break;
 
         case OFF_TOWER_R:
-
-            StopMotors();
-            LeftMtrSpeed(68, REVERSE);
-            RightMtrSpeed(60, REVERSE);
+            //ES_Timer_StopTimer(GIVE_UP_ON_TOWER_TIMER);
+            
+                TAPEDIR = 1;
+                StopMotors();
+                LeftMtrSpeed(68, REVERSE);
+                RightMtrSpeed(60, REVERSE);
+            
             ThisEvent.EventType = ES_NO_EVENT;
 
             break;
         case OFF_TOWER_L:
-
-            StopMotors();
-            LeftMtrSpeed(68, FORWARD);
-            RightMtrSpeed(60, FORWARD);
+            if (TAPEDIR == 0) {
+                TAPEDIR = 1;
+                StopMotors();
+                LeftMtrSpeed(68, REVERSE);
+                RightMtrSpeed(60, REVERSE);
+            } else {
+                StopMotors();
+                LeftMtrSpeed(68, FORWARD);
+                RightMtrSpeed(60, FORWARD);
+            }
             ThisEvent.EventType = ES_NO_EVENT;
 
             break;
         case TOWER_TAPE_C_ALIGN:
-            StopMotors();
-            nextState = Shooting;
-            makeTransition = TRUE;
+
+            if (BUMPCOUNTFORTAPE == 1) {
+                StopMotors();
+                BUMPCOUNTFORTAPE = 0;
+                TAPEDIR = 0;
+                nextState = Shooting;
+                makeTransition = TRUE;
+
+            }
             ThisEvent.EventType = ES_NO_EVENT;
             break;
+            //        case ES_TIMEOUT:
+            //            if (ThisEvent.EventParam == GIVE_UP_ON_TOWER_TIMER) {
+            //                StopMotors();
+            //                BUMPCOUNTFORTAPE = 0;
+            //                nextState = Searching;
+            //                makeTransition = TRUE;
+            //                ThisEvent.EventType = ES_NO_EVENT;
+            //            }
+            //            break;
 
 
         }
@@ -557,13 +648,15 @@ ES_Event RunTopHSM(ES_Event ThisEvent)
             makeTransition = TRUE;
             ThisEvent.EventType = ES_NO_EVENT;
             break;
-            
+
         case FRONT_L_BUMP:
+
             nextState = Traversing;
             makeTransition = TRUE;
             ThisEvent.EventType = ES_NO_EVENT;
             break;
         case FRONT_R_BUMP:
+
             nextState = Traversing;
             makeTransition = TRUE;
             ThisEvent.EventType = ES_NO_EVENT;

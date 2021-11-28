@@ -121,63 +121,61 @@ ES_Event RunTapeSensorService(ES_Event ThisEvent) {
                 //printf("%u -> sensor value\r\n", sensorVals[TS_SIDE_L]);
                 //printf("%u -> sensor value\r\n", sensorVals[TS_SIDE_L]);
 
-                //printf("%u %u %u -> sensor value\r\n", sensorVals[TS_SIDE_L], sensorVals[TS_SIDE_C], sensorVals[TS_SIDE_R]);
+                printf("%u %u %u -> sensor value\r\n", sensorVals[TS_SIDE_L], sensorVals[TS_SIDE_C], sensorVals[TS_SIDE_R]);
                 
                 // -- SIDE SENSORS --
                 
                 //EVENTS FOR CENTER TOWER TAPE SENSOR
                 // pushes a the relevant events if the threshold is met
-                if (sensorVals[TS_SIDE_C] > TS_THRESHOLD_UPPER && sensorVals[TS_SIDE_C] < 900) { // on tape
+                if( (sensorVals[TS_SIDE_C] > TS_THRESHOLD_UPPER && sensorVals[TS_SIDE_C] < 900 ) &&  sensorVals[TS_SIDE_L] < 900 &&  sensorVals[TS_SIDE_R] < 900) { // on tape
                     currState[0] = TOWER_TAPE_C_ALIGN;
-                } else if (sensorVals[TS_SIDE_C] < TS_THRESHOLD_LOWER) { // off tape
-                    currState[0] = TOWER_TAPE_C_NOT_ALIGN;
-                } else if (sensorVals[TS_SIDE_C] > OFF_FACE_VALUE){
-                    currState[0] = OFF_TOWER_C;
+                } else{
+                    currState[0] = ES_NO_EVENT;
                 }
                 // and pushes event if it wasnt on tape last time
-                if (currState[0] != lastState[0] && currState[0] == TOWER_TAPE_C_ALIGN) {
+                if (currState[0] != lastState[0]) {
                     // posts relevant event
                     lastState[0] = currState[0];
-                    newEvent.EventType = TOWER_TAPE_C_ALIGN;
+                    newEvent.EventType = currState[0];
                     PostTopHSM(newEvent);
                     //printf("ALIGMENT EVENT \r\n");
                 }
-                else if ((currState[0] != lastState[0]) && (currState[0] == TOWER_TAPE_C_NOT_ALIGN)) {
-                    // posts relevant event
-                    newEvent.EventType = TOWER_TAPE_C_NOT_ALIGN;
-                    PostTopHSM(newEvent);
-                    lastState[0] = currState[0];
-                    //printf("ALIGMENT LOST EVENT\r\n");
-                    //printf("%u -> sensor value\r\n", sensorVals[TS_FLOOR_RIGHT]);
-                }
-                if ((currState[0] != lastState[0]) && (currState[0] == OFF_TOWER_C)) {
-                    // posts relevant event
-                    newEvent.EventType = OFF_TOWER_C;
-                    PostTopHSM(newEvent);
-                    lastState[0] = currState[0];
-                    //printf("OFF TOWER EVENT\r\n");
-                    //printf("%u -> sensor value\r\n", sensorVals[TS_FLOOR_RIGHT]);
-                }
-                
-                if(((sensorVals[TS_SIDE_C] - sensorVals[TS_SIDE_L] <= PARALLEL_DIFFERENCE) && (sensorVals[TS_SIDE_C] < 900) && (sensorVals[TS_SIDE_L] < 900)) || ((sensorVals[TS_SIDE_C] - sensorVals[TS_SIDE_R] <= PARALLEL_DIFFERENCE) && (sensorVals[TS_SIDE_C] < 900) && (sensorVals[TS_SIDE_R] < 900)) || ((sensorVals[TS_SIDE_L] - sensorVals[TS_SIDE_R] <= PARALLEL_DIFFERENCE) && (sensorVals[TS_SIDE_L] < 900) && (sensorVals[TS_SIDE_R] < 900) )){
-                    currState[7] = PARALLEL;
-                }else{
-                   currState[7] = NOT_PARALLEL; 
-                }
-                if (currState[7] != lastState[7] && currState[7] == PARALLEL) {
-                    // posts relevant event
-                    lastState[7] = currState[7];
-                    newEvent.EventType = PARALLEL;
-                    PostTopHSM(newEvent);
-                    printf("PARALLEL EVENT \r\n");
-                }
-                if (currState[7] != lastState[7] && currState[7] == NOT_PARALLEL) {
-                    // posts relevant event
-                    lastState[7] = currState[7];
-                    newEvent.EventType = NOT_PARALLEL;
-                    PostTopHSM(newEvent);
-                    //printf("NOT PARALLEL EVENT\r\n");
-                }
+//                else if ((currState[0] != lastState[0]) && (currState[0] == TOWER_TAPE_C_NOT_ALIGN)) {
+//                    // posts relevant event
+//                    newEvent.EventType = TOWER_TAPE_C_NOT_ALIGN;
+//                    PostTopHSM(newEvent);
+//                    lastState[0] = currState[0];
+//                    //printf("ALIGMENT LOST EVENT\r\n");
+//                    //printf("%u -> sensor value\r\n", sensorVals[TS_FLOOR_RIGHT]);
+//                }
+//                if ((currState[0] != lastState[0]) && (currState[0] == OFF_TOWER_C)) {
+//                    // posts relevant event
+//                    newEvent.EventType = OFF_TOWER_C;
+//                    PostTopHSM(newEvent);
+//                    lastState[0] = currState[0];
+//                    //printf("OFF TOWER EVENT\r\n");
+//                    //printf("%u -> sensor value\r\n", sensorVals[TS_FLOOR_RIGHT]);
+//                }
+////                
+//                if(((sensorVals[TS_SIDE_C] - sensorVals[TS_SIDE_L] <= PARALLEL_DIFFERENCE) && (sensorVals[TS_SIDE_C] < 900) && (sensorVals[TS_SIDE_L] < 900)) || ((sensorVals[TS_SIDE_C] - sensorVals[TS_SIDE_R] <= PARALLEL_DIFFERENCE) && (sensorVals[TS_SIDE_C] < 900) && (sensorVals[TS_SIDE_R] < 900)) || ((sensorVals[TS_SIDE_L] - sensorVals[TS_SIDE_R] <= PARALLEL_DIFFERENCE) && (sensorVals[TS_SIDE_L] < 900) && (sensorVals[TS_SIDE_R] < 900) )){
+//                    currState[7] = PARALLEL;
+//                }else{
+//                   currState[7] = NOT_PARALLEL; 
+//                }
+//                if (currState[7] != lastState[7] && currState[7] == PARALLEL) {
+//                    // posts relevant event
+//                    lastState[7] = currState[7];
+//                    newEvent.EventType = PARALLEL;
+//                    PostTopHSM(newEvent);
+//                    printf("PARALLEL EVENT \r\n");
+//                }
+//                if (currState[7] != lastState[7] && currState[7] == NOT_PARALLEL) {
+//                    // posts relevant event
+//                    lastState[7] = currState[7];
+//                    newEvent.EventType = NOT_PARALLEL;
+//                    PostTopHSM(newEvent);
+//                    //printf("NOT PARALLEL EVENT\r\n");
+//                }
 
                 
                 

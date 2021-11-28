@@ -205,6 +205,7 @@ ES_Event RunTraversingHSM(ES_Event ThisEvent)
             
             ThisEvent.EventType = ES_NO_EVENT;
             break;
+            
         }
         break;
     
@@ -259,7 +260,7 @@ ES_Event RunTraversingHSM(ES_Event ThisEvent)
             
             ThisEvent.EventType = ES_NO_EVENT;
             break;
-      
+            
         }
         break;
     default:

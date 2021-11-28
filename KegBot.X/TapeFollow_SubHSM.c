@@ -215,7 +215,7 @@ ES_Event RunTapeFollowHSM(ES_Event ThisEvent)
         case ES_ENTRY:
             //HERE BASED ON THE CW FLAG A TIMER WILL BE INITILIZED FOR FORWARD
             //OR REVERSE TRAVERSING
-            ES_Timer_InitTimer(CCW_ADJUST_TIMER, 800);
+            ES_Timer_InitTimer(CCW_ADJUST_TIMER, 500);
 
             LeftMtrSpeed(70, FORWARD);
             RightMtrSpeed(70, REVERSE);
@@ -231,29 +231,29 @@ ES_Event RunTapeFollowHSM(ES_Event ThisEvent)
             //                    ThisEvent.EventType = ES_NO_EVENT;
             //                  
             //                    break;
-//        case TAPE_LEFT:
-//            //CW AJUSTMENT WORKED AND BOT IS HEAD FIRST INTO WALL
-//            //REVERSE, ADJUST, AND CONTINUE SHARP TURNS
-//            StopMotors();
-//            nextState = Reverse;
-//            makeTransition = TRUE;
-//            ThisEvent.EventType = ES_NO_EVENT;
-//            break;
-//        case TAPE_FRONT:
-//            //CW AJUSTMENT WORKED AND BOT IS HEAD FIRST INTO WALL
-//            //REVERSE, ADJUST, AND CONTINUE SHARP TURNS
-//            StopMotors();
-//            nextState = Reverse;
-//            makeTransition = TRUE;
-//            ThisEvent.EventType = ES_NO_EVENT;
-//            break;
-//        case TAPE_RIGHT:
-//            //START MANUAEVER AROUND TOWER THIS HAPPENS LESS OFTEN THAN THE 
-//            //FRONT BUMP
-//            StopMotors();
-//            nextState = Reverse;
-//            makeTransition = TRUE;
-//            ThisEvent.EventType = ES_NO_EVENT;
+        case TAPE_LEFT:
+            //CW AJUSTMENT WORKED AND BOT IS HEAD FIRST INTO WALL
+            //REVERSE, ADJUST, AND CONTINUE SHARP TURNS
+            StopMotors();
+            nextState = Reverse;
+            makeTransition = TRUE;
+            ThisEvent.EventType = ES_NO_EVENT;
+            break;
+        case TAPE_FRONT:
+            //CW AJUSTMENT WORKED AND BOT IS HEAD FIRST INTO WALL
+            //REVERSE, ADJUST, AND CONTINUE SHARP TURNS
+            StopMotors();
+            nextState = Reverse;
+            makeTransition = TRUE;
+            ThisEvent.EventType = ES_NO_EVENT;
+            break;
+        case TAPE_RIGHT:
+            //START MANUAEVER AROUND TOWER THIS HAPPENS LESS OFTEN THAN THE 
+            //FRONT BUMP
+            StopMotors();
+            nextState = Reverse;
+            makeTransition = TRUE;
+            ThisEvent.EventType = ES_NO_EVENT;
 //            break;
         case ES_TIMEOUT:
             //TIMED AJUSTMENT FOR CW TRAVERSING AROUND CORNERS, VERY CLEAN
@@ -275,7 +275,7 @@ ES_Event RunTapeFollowHSM(ES_Event ThisEvent)
         switch (ThisEvent.EventType) {
         case ES_ENTRY:
             //Reverse
-            ES_Timer_InitTimer(REVERSE_TIMER1, 700);
+            ES_Timer_InitTimer(REVERSE_TIMER1, 900);
 
             LeftMtrSpeed(70, REVERSE);
             RightMtrSpeed(70, REVERSE);

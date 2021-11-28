@@ -136,7 +136,7 @@ ES_Event RunSearchingSubHSM(ES_Event ThisEvent)
             // initial state
             InitTapeFollowHSM();
             // now put the machine into the actual initial state
-            nextState = CW_Rotate;
+            nextState = Moving_To_Tower;
             makeTransition = TRUE;
             ThisEvent.EventType = ES_NO_EVENT;
         }
