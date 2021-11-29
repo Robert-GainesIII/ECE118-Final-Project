@@ -127,7 +127,7 @@ ES_Event RunTapeSensorService(ES_Event ThisEvent) {
                 
                 //EVENTS FOR CENTER TOWER TAPE SENSOR
                 // pushes a the relevant events if the threshold is met
-                if( (sensorVals[TS_SIDE_C] > TS_THRESHOLD_UPPER && sensorVals[TS_SIDE_C] < 900 ) &&  sensorVals[TS_SIDE_L] < 900 &&  sensorVals[TS_SIDE_R] < 900) { // on tape
+                if( (sensorVals[TS_SIDE_C] > TS_THRESHOLD_UPPER && sensorVals[TS_SIDE_C] < 600 ) &&  sensorVals[TS_SIDE_L] < 900 &&  sensorVals[TS_SIDE_R] < 900) { // on tape
                     currState[0] = TOWER_TAPE_C_ALIGN;
                 } else{
                     currState[0] = ES_NO_EVENT;

@@ -512,25 +512,26 @@ ES_Event RunTopHSM(ES_Event ThisEvent)
         switch (ThisEvent.EventType) {
         case ES_ENTRY:
 
-            RightMtrSpeed(90, FORWARD);
-            LeftMtrSpeed(65, FORWARD);
+            RightMtrSpeed(70, FORWARD);
+            LeftMtrSpeed(0, FORWARD);
             ThisEvent.EventType = ES_NO_EVENT;
             break;
 
         case FRONT_R_BUMP:
-
+            StopMotors();
             nextState = Traversing;
             makeTransition = TRUE;
             ThisEvent.EventType = ES_NO_EVENT;
             break;
         case FRONT_L_BUMP:
-
+            StopMotors();
             nextState = Traversing;
             makeTransition = TRUE;
             ThisEvent.EventType = ES_NO_EVENT;
             break;
 
         case TAPE_FRONT:
+            StopMotors();
             nextState = TapeFollow;
             makeTransition = TRUE;
             ThisEvent.EventType = ES_NO_EVENT;

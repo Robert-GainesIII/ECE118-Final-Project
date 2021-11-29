@@ -66,7 +66,7 @@
 
 // -- tape sensor stuff --
 // TODO: find a good threshold
-#define TS_THRESHOLD_UPPER 450
+#define TS_THRESHOLD_UPPER 400
 #define TS_THRESHOLD_LOWER 50
 #define OFF_FACE_VALUE 900
 #define PARALLEL_DIFFERENCE 0

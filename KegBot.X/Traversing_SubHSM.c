@@ -180,7 +180,7 @@ ES_Event RunTraversingHSM(ES_Event ThisEvent)
         case TAPE_LEFT:
             TAPE_L = 1;
             //START MANUAEVER AROUND TOWER BEFORE TIMEOUT
-            if(TAPE_B == 1){
+            if(TAPE_R == 1 || TAPE_F == 1){
                 nextState = Reverse;
                 makeTransition = TRUE;
                 TAPE_F = 0;
@@ -194,7 +194,7 @@ ES_Event RunTraversingHSM(ES_Event ThisEvent)
         case TAPE_RIGHT:
             TAPE_R = 1;
             //START MANUAEVER AROUND TOWER BEFORE TIMEOUT
-            if(TAPE_F == 1){
+            if(TAPE_F == 1 || TAPE_L == 1){
                 nextState = Reverse;
                 makeTransition = TRUE;
                 TAPE_F = 0;
@@ -235,7 +235,7 @@ ES_Event RunTraversingHSM(ES_Event ThisEvent)
         case TAPE_LEFT:
             TAPE_L = 1;
             //START MANUAEVER AROUND TOWER BEFORE TIMEOUT
-            if(TAPE_B == 1){
+            if(TAPE_B == 1 || TAPE_R == 1){
                 nextState = Forward;
                 makeTransition = TRUE;
                 TAPE_F = 0;
@@ -249,7 +249,7 @@ ES_Event RunTraversingHSM(ES_Event ThisEvent)
         case TAPE_RIGHT:
             TAPE_R = 1;
             //START MANUAEVER AROUND TOWER BEFORE TIMEOUT
-            if(TAPE_B == 1){
+            if(TAPE_L == 1 || TAPE_B == 1){
                 nextState = Forward;
                 makeTransition = TRUE;
                 TAPE_F = 0;
